@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes } from 'crypto';
-import { IJwtPayload } from '../../../shared/interfaces/jwt-payload.interface';
+import type { IJwtPayload } from '../../../shared/interfaces/jwt-payload.interface';
 import { AppContext } from '../../../shared/enums/app-context.enum';
 import { UserType } from '../../../shared/enums/user-type.enum';
 
@@ -60,9 +60,9 @@ export class TokenService {
       tokenType: 'access',
     };
 
-    const accessToken = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign(payload as any, {
       secret: this.accessSecret,
-      expiresIn: this.accessExpiry,
+      expiresIn: this.accessExpiry as any,
     });
 
     const { plaintext: refreshToken, hash: refreshTokenHash } =
@@ -94,9 +94,9 @@ export class TokenService {
       tokenType: 'mfa_pending',
     };
 
-    const token = this.jwtService.sign(payload, {
+    const token = this.jwtService.sign(payload as any, {
       secret: this.accessSecret,
-      expiresIn: '5m',
+      expiresIn: '5m' as any,
     });
 
     return { token, expiresIn: 300 };

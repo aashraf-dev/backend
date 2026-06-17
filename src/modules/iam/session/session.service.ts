@@ -255,10 +255,10 @@ export class SessionService {
       ipAddress: params.ipAddress,
       userAgent: params.userAgent,
       expiresAt,
-    });
+    } as any);
 
-    const saved = await repo.save(session);
-    return saved.id;
+    const saved = await repo.save(session as any);
+    return Array.isArray(saved) ? saved[0].id : saved.id;
   }
 
   private async createTenantSession(
@@ -280,7 +280,7 @@ export class SessionService {
         });
 
         const saved = await em.save(SessionEntity, session);
-        return saved.id;
+        return Array.isArray(saved) ? saved[0].id : saved.id;
       },
     );
   }

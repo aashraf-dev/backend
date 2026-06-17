@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { authenticator } from 'otplib';
+import { TOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib';
 import * as qrcode from 'qrcode';
 import { createHash, randomBytes } from 'crypto';
 import { InjectDataSource } from '@nestjs/typeorm';
@@ -31,6 +31,8 @@ const RECOVERY_CODE_COUNT = 10;
 export class MfaService {
   private readonly logger = new Logger(MfaService.name);
   private readonly appName: string;
+  /** otplib v12 TOTP instance with required crypto + base32 plugins */
+  private readonly totp: TOTP;
 
   constructor(
     private readonly configService: ConfigService,
@@ -41,8 +43,11 @@ export class MfaService {
   ) {
     this.appName = this.configService.get<string>('auth.mfaAppName')!;
 
-    // Configure TOTP window — accept 1 step before/after for clock drift
-    authenticator.options = { window: 1 };
+    // Configure TOTP — accept 1 step before/after for clock drift
+    this.totp = new TOTP({
+      crypto: new NobleCryptoPlugin(),
+      base32: new ScureBase32Plugin(),
+    });
   }
 
   // ── Setup (step 1 — generate secret + QR code) ───────────────────
@@ -52,8 +57,12 @@ export class MfaService {
     email: string,
     tenantSchema: string | null,
   ): Promise<IMfaSetupResult> {
-    const secret = authenticator.generateSecret(32);
-    const otpAuthUrl = authenticator.keyuri(email, this.appName, secret);
+    const secret = this.totp.generateSecret();
+    const otpAuthUrl = this.totp.toURI({
+      label: email,
+      issuer: this.appName,
+      secret,
+    });
 
     // Temporarily store unverified secret — overwritten on verify+enable
     if (tenantSchema) {
@@ -83,7 +92,7 @@ export class MfaService {
       const repo = this.platformDs.getRepository(PlatformUserEntity);
       const user = await repo.findOne({
         where: { id: userId },
-        select: ['id', 'mfaEnabled'],
+        select: { id: true, mfaEnabled: true },
       });
 
       if (user?.mfaEnabled) {
@@ -118,7 +127,7 @@ export class MfaService {
       );
     }
 
-    if (!this.verifyTotpCode(totpCode, secret)) {
+    if (!(await this.verifyTotpCode(totpCode, secret))) {
       throw new BadRequestException(
         'Invalid TOTP code. Please check your authenticator app.',
       );
@@ -173,7 +182,7 @@ export class MfaService {
 
     // Try TOTP first
     if (this.isStandardTotpCode(code)) {
-      if (this.verifyTotpCode(code, secret)) {
+      if (await this.verifyTotpCode(code, secret)) {
         await this.clearMfaAttempts(userId);
         return true;
       }
@@ -222,9 +231,13 @@ export class MfaService {
 
   // ── Private helpers ──────────────────────────────────────────────
 
-  private verifyTotpCode(code: string, secret: string): boolean {
+  private async verifyTotpCode(code: string, secret: string): Promise<boolean> {
     try {
-      return authenticator.verify({ token: code, secret });
+      const result = await this.totp.verify(code, {
+        secret,
+        epochTolerance: 30,
+      });
+      return result?.valid ?? false;
     } catch {
       return false;
     }
@@ -238,14 +251,18 @@ export class MfaService {
       return this.tenantConn.runInTenantSchema(tenantSchema, async (em) => {
         const setting = await em.findOne(MfaSettingEntity, {
           where: { userId, isVerified: false },
-
-          select: ['secret'],
+          select: { secret: true },
         });
         return setting?.secret ?? null;
       });
     }
 
-    const user = await this.platformDs;
+    const user = await this.platformDs
+      .getRepository(PlatformUserEntity)
+      .findOne({
+        where: { id: userId },
+        select: { mfaSecret: true, mfaEnabled: true },
+      });
 
     return user?.mfaEnabled ? null : (user?.mfaSecret ?? null);
   }
@@ -256,7 +273,10 @@ export class MfaService {
   ): Promise<{ secret: string | null; recoveryCodes: string[] }> {
     if (tenantSchema) {
       return this.tenantConn.runInTenantSchema(tenantSchema, async (em) => {
-        const setting = await em.findOne(MfaSettingEntity, {});
+        const setting = await em.findOne(MfaSettingEntity, {
+          where: { userId, isVerified: true },
+          select: { secret: true, recoveryCodes: true },
+        });
         return {
           secret: setting?.secret ?? null,
           recoveryCodes: setting?.recoveryCodes ?? [],
@@ -281,6 +301,7 @@ export class MfaService {
     await this.tenantConn.runInTenantSchema(tenantSchema, async (em) => {
       const setting = await em.findOne(MfaSettingEntity, {
         where: { userId },
+        select: { id: true, recoveryCodes: true },
       });
       if (!setting) return;
 

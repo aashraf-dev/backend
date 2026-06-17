@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import {
   EntityManager,
   EntityTarget,
@@ -126,4 +127,3 @@ export class TenantRepositoryFactory {
 }
 
 // Make TenantRepositoryFactory injectable
-import { Injectable } from '@nestjs/common';

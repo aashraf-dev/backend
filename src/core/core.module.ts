@@ -30,7 +30,7 @@ import { RedisModule } from '../shared/redis/redis.module';
       useFactory: (cfg: ConfigService) => ({
         secret: cfg.get<string>('auth.jwt.accessSecret'),
         signOptions: {
-          expiresIn: cfg.get<string>('auth.jwt.accessExpiry') || '15m',
+          expiresIn: cfg.get<string>('auth.jwt.accessExpiry') || ('15m' as any),
         },
       }),
     }),
