@@ -93,7 +93,7 @@ export const TENANT_ENTITIES = [
         ssl:
           cfg.get<string>('app.nodeEnv') === 'production'
             ? { rejectUnauthorized: true }
-            : false,
+            : { rejectUnauthorized: false },
         extra: {
           statement_timeout: 30000, // 30 s query timeout
           idle_in_transaction_session_timeout: 60000,
@@ -120,7 +120,7 @@ export const TENANT_ENTITIES = [
         ssl:
           cfg.get<string>('app.nodeEnv') === 'production'
             ? { rejectUnauthorized: true }
-            : false,
+            : { rejectUnauthorized: false },
         extra: {
           statement_timeout: 30000,
           idle_in_transaction_session_timeout: 60000,

@@ -12,7 +12,8 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 
 @Injectable()
 export class TimeoutInterceptor implements NestInterceptor {
-  constructor(private readonly timeoutMs: number = DEFAULT_TIMEOUT_MS) {}
+  // constructor() {}
+  private readonly timeoutMs: number = DEFAULT_TIMEOUT_MS;
 
   intercept(_ctx: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(

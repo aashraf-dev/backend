@@ -15,6 +15,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly configService: ConfigService) {}
 
   onModuleInit(): void {
+    const host = this.configService.get<string>('redis.host') ?? 'localhost';
+    const isTlsHost = host !== 'localhost' && host !== '127.0.0.1';
+
     const options: RedisOptions = {
       host: this.configService.get<string>('redis.host'),
       port: this.configService.get<number>('redis.port'),
@@ -30,6 +33,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       lazyConnect: false,
       enableReadyCheck: true,
       maxRetriesPerRequest: 3,
+      tls: isTlsHost ? {} : undefined,
     };
 
     this.client = new Redis(options);
