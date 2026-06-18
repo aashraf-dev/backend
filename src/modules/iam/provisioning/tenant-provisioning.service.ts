@@ -250,6 +250,28 @@ export class TenantProvisioningService {
     >[0],
     params: IProvisionTenantParams,
   ): Promise<string> {
+    // Idempotent — if the owner was already created in a previous partial attempt, skip
+    const existing = await em.findOne(UserEntity, {
+      where: { email: params.ownerEmail.toLowerCase().trim() },
+    });
+
+    if (existing) {
+      this.logger.debug(
+        `Owner user already exists (${existing.id}), skipping creation`,
+      );
+      return existing.id;
+    }
+
+    if (
+      !params.ownerPassword ||
+      !params.ownerFirstName ||
+      !params.ownerLastName
+    ) {
+      throw new Error(
+        'Owner credentials required but not provided and owner user does not exist',
+      );
+    }
+
     const passwordHash = await bcrypt.hash(
       params.ownerPassword,
       this.bcryptRounds,

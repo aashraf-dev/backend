@@ -15,7 +15,8 @@ import {
 import { DatabaseModule } from './database/database.module';
 import { CoreModule } from './core/core.module';
 import { RedisModule } from './shared/redis/redis.module';
-import { IamModule } from './modules/iam/iam.module'; // ← NEW
+import { IamModule } from './modules/iam/iam.module';
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module'; // ← NEW
 import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.middleware';
 
 @Module({
@@ -68,10 +69,10 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
     DatabaseModule,
     RedisModule,
     CoreModule,
-    IamModule, // ← NEW
+    IamModule,
+    PlatformAdminModule, // ← NEW
 
-    // Uncomment as we build each one:
-    // PlatformAdminModule,
+    // Uncomment as we build each:
     // ClinicCrmModule,
     // PetPortalModule,
   ],
