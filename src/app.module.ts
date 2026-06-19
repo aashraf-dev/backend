@@ -17,7 +17,9 @@ import { CoreModule } from './core/core.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { IamModule } from './modules/iam/iam.module';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
-import { ClinicCrmModule } from './modules/clinic-crm/clinic-crm.module'; // ← NEW
+import { ClinicCrmModule } from './modules/clinic-crm/clinic-crm.module';
+import { PetPortalModule } from './modules/pet-portal/pet-portal.module';
+
 import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.middleware';
 
 @Module({
@@ -69,10 +71,8 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
     CoreModule,
     IamModule,
     PlatformAdminModule,
-    ClinicCrmModule, // ← NEW
-
-    // Coming next:
-    // PetPortalModule,
+    ClinicCrmModule,
+    PetPortalModule, // ← all modules now registered
   ],
 })
 export class AppModule implements NestModule {
