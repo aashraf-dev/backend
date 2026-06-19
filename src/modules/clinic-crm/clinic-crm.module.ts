@@ -44,8 +44,10 @@ import { ClinicServicesService } from './clinic-services/clinic-services.service
 import { DashboardController } from './dashboard/dashboard.controller';
 import { DashboardService } from './dashboard/dashboard.service';
 
+import { JobsModule } from '../jobs/jobs.module';
+
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, JobsModule],
   controllers: [
     StaffController,
     DepartmentsController,

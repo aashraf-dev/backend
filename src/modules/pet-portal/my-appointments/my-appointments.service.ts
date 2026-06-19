@@ -27,6 +27,7 @@ import {
   PortalCancelAppointmentDto,
   PortalAppointmentQueryDto,
 } from './dto';
+import { NotificationProducer } from 'src/modules/jobs/producers/notification.producer';
 
 /** Earliest booking window in hours */
 const MIN_BOOKING_NOTICE_HOURS = 2;
@@ -43,6 +44,7 @@ export class MyAppointmentsService {
     private readonly portalCtx: PortalContextService,
     private readonly repoFactory: TenantRepositoryFactory,
     private readonly tenantConn: TenantConnectionService,
+    private readonly notificationProducer: NotificationProducer,
   ) {}
 
   // ── Book ──────────────────────────────────────────────────────────
@@ -228,6 +230,11 @@ export class MyAppointmentsService {
         cancelledAt: new Date(),
         cancelledReason: dto.reason ?? 'Cancelled by pet owner via portal',
       });
+
+    await this.notificationProducer.removeAppointmentReminders(
+      appointmentId,
+      [24, 2],
+    );
 
     return this.findOne(appointmentId, currentUser);
   }

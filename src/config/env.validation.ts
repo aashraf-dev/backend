@@ -38,4 +38,23 @@ export const envValidationSchema = Joi.object({
   THROTTLE_MEDIUM_LIMIT: Joi.number().default(100),
   THROTTLE_LONG_TTL: Joi.number().default(3600000),
   THROTTLE_LONG_LIMIT: Joi.number().default(1000),
+
+  // Queue Redis
+  QUEUE_REDIS_HOST: Joi.string().default('localhost'),
+  QUEUE_REDIS_PORT: Joi.number().port().default(6379),
+  QUEUE_REDIS_PASSWORD: Joi.string().allow('').default(''),
+  QUEUE_REDIS_DB: Joi.number().min(0).max(15).default(1),
+
+  // Email
+  SMTP_HOST: Joi.string().default('smtp.sendgrid.net'),
+  SMTP_PORT: Joi.number().port().default(587),
+  SMTP_SECURE: Joi.boolean().default(false),
+  SMTP_USER: Joi.string().allow('').default(''),
+  SMTP_PASS: Joi.string().allow('').default(''),
+  SMTP_FROM_NAME: Joi.string().default('Vetos Platform'),
+  SMTP_FROM_EMAIL: Joi.string().email().default('noreply@vetos.com'),
+
+  // Jobs
+  APPOINTMENT_REMINDER_HOURS: Joi.string().default('24,2'),
+  SUBSCRIPTION_EXPIRY_WARNING_DAYS: Joi.string().default('30,14,7,3,1'),
 });

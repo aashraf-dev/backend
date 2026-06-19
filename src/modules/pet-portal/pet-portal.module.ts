@@ -37,11 +37,14 @@ import { MyPrescriptionsService } from './my-prescriptions/my-prescriptions.serv
 import { ClinicInfoController } from './clinic-info/clinic-info.controller';
 import { ClinicInfoService } from './clinic-info/clinic-info.service';
 
+import { JobsModule } from '../jobs/jobs.module';
+
 @Module({
   imports: [
     DatabaseModule,
     // Register TenantEntity on the platform datasource for ClinicInfoService
     TypeOrmModule.forFeature([TenantEntity], 'platform'),
+    JobsModule,
   ],
   controllers: [
     PortalAuthController,

@@ -19,6 +19,7 @@ import { IamModule } from './modules/iam/iam.module';
 import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
 import { ClinicCrmModule } from './modules/clinic-crm/clinic-crm.module';
 import { PetPortalModule } from './modules/pet-portal/pet-portal.module';
+import { JobsModule } from './modules/jobs/jobs.module';
 
 import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.middleware';
 
@@ -73,6 +74,7 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
     PlatformAdminModule,
     ClinicCrmModule,
     PetPortalModule, // ← all modules now registered
+    JobsModule,
   ],
 })
 export class AppModule implements NestModule {

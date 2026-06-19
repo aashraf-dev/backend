@@ -27,6 +27,7 @@ import {
   CancelAppointmentDto,
   AppointmentQueryDto,
 } from './dto';
+import { NotificationProducer } from 'src/modules/jobs/producers/notification.producer';
 
 /** Valid forward transitions for appointment status */
 const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
@@ -57,6 +58,7 @@ export class AppointmentsService {
     private readonly crmCtx: CrmContextService,
     private readonly repoFactory: TenantRepositoryFactory,
     private readonly tenantConn: TenantConnectionService,
+    private readonly notificationProducer: NotificationProducer, // ← NEW
   ) {}
 
   // ── Create ───────────────────────────────────────────────────────
@@ -222,6 +224,11 @@ export class AppointmentsService {
     if (targetStatus === AppointmentStatus.CANCELLED) {
       update.cancelledAt = new Date();
       update.cancelledReason = cancelReason ?? null;
+
+      await this.notificationProducer.removeAppointmentReminders(
+        id,
+        [24, 2], // Must match APPOINTMENT_REMINDER_HOURS env var
+      );
     }
 
     await this.repoFactory.for(AppointmentEntity, schema).update(id, update);

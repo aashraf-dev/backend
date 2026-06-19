@@ -7,9 +7,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-
+import { DataSource } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { TenantConnectionService } from '../../../database/tenant-connection.service';
 import { TenantRepositoryFactory } from '../../../database/tenant-repository';
+import { TenantEntity } from 'src/database/entities/platform';
 import { UserEntity } from '../../../database/entities/tenant/user.entity';
 import { OwnerProfileEntity } from '../../../database/entities/tenant/owner-profile.entity';
 import { UserRoleEntity } from '../../../database/entities/tenant/user-role.entity';
@@ -21,6 +23,7 @@ import { CacheKeys } from '../../../shared/constants/cache-keys.constant';
 import { PermissionResolverService } from 'src/core/servicese/permission-resolver.service';
 import { PortalContextService } from '../common/portal-context.service';
 import { RegisterPortalUserDto, UpdateEmailDto } from './dto';
+import { NotificationProducer } from 'src/modules/jobs/producers/notification.producer';
 
 export interface IRegistrationResult {
   userId: string;
@@ -40,6 +43,8 @@ export class PortalAuthService {
     private readonly permissionResolver: PermissionResolverService,
     private readonly redis: RedisService,
     private readonly configService: ConfigService,
+    @InjectDataSource('platform') private readonly platformDs: DataSource,
+    private readonly notificationProducer: NotificationProducer,
   ) {
     this.bcryptRounds = this.configService.get<number>('auth.bcryptRounds')!;
   }
@@ -105,6 +110,23 @@ export class PortalAuthService {
         return { userId: savedUser.id, ownerProfileId: savedProfile.id };
       },
     );
+
+    const tenantInfo = await this.platformDs
+      .getRepository(TenantEntity)
+      .findOne({ where: { id: this.portalCtx.getTenantId() } });
+
+    if (tenantInfo) {
+      await this.notificationProducer.queueEmail({
+        to: dto.email,
+        subject: `Welcome to ${tenantInfo.name}'s Pet Portal`,
+        template: 'registration-welcome',
+        context: {
+          firstName: dto.firstName,
+          clinicName: tenantInfo.name,
+          portalUrl: `https://${tenantInfo.slug}-portal.vetos.com`,
+        },
+      });
+    }
 
     this.logger.log(`New pet owner registered: ${userId} in schema ${schema}`);
 
