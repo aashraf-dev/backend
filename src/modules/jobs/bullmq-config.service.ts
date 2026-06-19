@@ -24,14 +24,26 @@ export class BullMQConfigService implements SharedBullConfigurationFactory {
   }
 
   getConnection(): ConnectionOptions {
+    const host = this.configService.get<string>('redis.host') ?? 'localhost';
+    const isTlsHost = host !== 'localhost' && host !== '127.0.0.1';
+
     return {
       host: this.configService.get<string>('QUEUE_REDIS_HOST') ?? 'localhost',
       port: this.configService.get<number>('QUEUE_REDIS_PORT') ?? 6379,
       password:
         this.configService.get<string>('QUEUE_REDIS_PASSWORD') || undefined,
       db: this.configService.get<number>('QUEUE_REDIS_DB') ?? 1,
-      maxRetriesPerRequest: null, // Required by BullMQ
       enableReadyCheck: false,
+      tls: isTlsHost ? {} : undefined,
+      retryStrategy: (times) => {
+        if (times > 10) {
+          console.log('Redis connection failed after 10 retries');
+          return null; // Stop retrying
+        }
+        return Math.min(times * 100, 3000);
+      },
+      lazyConnect: false,
+      maxRetriesPerRequest: 3,
     };
   }
 }
