@@ -16,7 +16,8 @@ import { DatabaseModule } from './database/database.module';
 import { CoreModule } from './core/core.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { IamModule } from './modules/iam/iam.module';
-import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module'; // ← NEW
+import { PlatformAdminModule } from './modules/platform-admin/platform-admin.module';
+import { ClinicCrmModule } from './modules/clinic-crm/clinic-crm.module'; // ← NEW
 import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.middleware';
 
 @Module({
@@ -32,7 +33,6 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
       ],
       validationSchema: envValidationSchema,
     }),
-
     ClsModule.forRoot({
       global: true,
       middleware: {
@@ -41,7 +41,6 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
         idGenerator: () => crypto.randomUUID(),
       },
     }),
-
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -65,15 +64,14 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
         ],
       }),
     }),
-
     DatabaseModule,
     RedisModule,
     CoreModule,
     IamModule,
-    PlatformAdminModule, // ← NEW
+    PlatformAdminModule,
+    ClinicCrmModule, // ← NEW
 
-    // Uncomment as we build each:
-    // ClinicCrmModule,
+    // Coming next:
     // PetPortalModule,
   ],
 })

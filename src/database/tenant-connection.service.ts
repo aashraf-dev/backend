@@ -89,6 +89,10 @@ export class TenantConnectionService implements OnModuleDestroy {
       entities: TENANT_ENTITIES,
       synchronize: true, // only on provisioning, not in runtime DS
       logging: false,
+      ssl:
+        this.configService.get<string>('app.nodeEnv') === 'production'
+          ? { rejectUnauthorized: true }
+          : { rejectUnauthorized: false },
     });
 
     await tempDataSource.initialize();

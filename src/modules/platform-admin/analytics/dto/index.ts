@@ -1,1 +1,1 @@
-export { AnalyticsQueryDto } from './analytics-query.dto.ts';
+export { AnalyticsQueryDto } from './analytics-query.dto';

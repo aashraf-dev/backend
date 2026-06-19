@@ -319,14 +319,25 @@ export class TenantsService {
       );
     }
 
+    const ownerEmail = dto.owner?.email;
+    const ownerPassword = dto.owner?.password;
+    const ownerFirstName = dto.owner?.firstName;
+    const ownerLastName = dto.owner?.lastName;
+
+    if (!ownerEmail || !ownerPassword || !ownerFirstName || !ownerLastName) {
+      throw new UnprocessableEntityException(
+        'Owner information is required for retry provisioning.',
+      );
+    }
+
     try {
       await this.provisioningService.provision({
         tenantId: tenant.id,
         slug: tenant.slug,
-        ownerEmail: dto.owner?.email,
-        ownerPassword: dto.owner?.password,
-        ownerFirstName: dto.owner?.firstName,
-        ownerLastName: dto.owner?.lastName,
+        ownerEmail,
+        ownerPassword,
+        ownerFirstName,
+        ownerLastName,
       });
 
       await this.platformDs
