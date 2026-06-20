@@ -2,6 +2,7 @@ import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import {
   appConfig,
@@ -20,6 +21,7 @@ import { PlatformAdminModule } from './modules/platform-admin/platform-admin.mod
 import { ClinicCrmModule } from './modules/clinic-crm/clinic-crm.module';
 import { PetPortalModule } from './modules/pet-portal/pet-portal.module';
 import { JobsModule } from './modules/jobs/jobs.module';
+import { AiModule } from './modules/ai/ai.module';
 
 import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.middleware';
 
@@ -67,6 +69,11 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
         ],
       }),
     }),
+    EventEmitterModule.forRoot({
+      wildcard: false,
+      delimiter: '.',
+      global: true,
+    }),
     DatabaseModule,
     RedisModule,
     CoreModule,
@@ -75,6 +82,7 @@ import { TenantResolutionMiddleware } from './core/middleware/tenant-resolution.
     ClinicCrmModule,
     PetPortalModule, // ← all modules now registered
     JobsModule,
+    AiModule,
   ],
 })
 export class AppModule implements NestModule {
