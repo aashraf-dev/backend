@@ -6,7 +6,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SoapInput } from '../../entities/tenant/soap-draft.entity';
+import type { SoapInput } from '../../entities/tenant/soap-draft.entity';
 
 export class GenerateSoapDto {
   @ApiProperty({ description: 'Patient (pet) UUID' })

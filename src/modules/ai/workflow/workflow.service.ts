@@ -20,7 +20,7 @@ export class WorkflowService {
     private readonly costGuard: AiCostGuardService,
     private readonly repoFactory: TenantRepositoryFactory,
   ) {
-    this.rules = new Map([
+    this.rules = new Map<WorkflowTrigger, IWorkflowRule>([
       ['appointment_no_show', new NoShowRule()],
       ['visit_completed', new VisitCompletedRule()],
     ]);

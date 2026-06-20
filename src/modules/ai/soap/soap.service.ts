@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { createClient } from '@deepgram/sdk';
+import { DeepgramClient } from '@deepgram/sdk';
 import { ConfigService } from '@nestjs/config';
 
 import { AiProviderService } from '../core/ai-provider.service';
@@ -56,7 +56,7 @@ Respond ONLY with valid JSON matching this exact structure:
 @Injectable()
 export class SoapService {
   private readonly logger = new Logger(SoapService.name);
-  private readonly deepgram: ReturnType<typeof createClient>;
+  private readonly deepgram: DeepgramClient;
 
   constructor(
     private readonly ai: AiProviderService,
@@ -68,7 +68,7 @@ export class SoapService {
     private readonly configService: ConfigService,
   ) {
     const dgKey = this.configService.get<string>('DEEPGRAM_API_KEY');
-    if (dgKey) this.deepgram = createClient(dgKey);
+    if (dgKey) this.deepgram = new DeepgramClient(dgKey);
   }
 
   // ── Generate SOAP from text ───────────────────────────────────────────

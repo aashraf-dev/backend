@@ -7,6 +7,7 @@ export interface IClsStore extends ClsStore {
   TENANT_ID: string | null;
   TENANT_SCHEMA: string | null;
   TENANT_SLUG: string | null;
+  TENANT_NAME: string;
   APP_CONTEXT: AppContext | null;
 }
 

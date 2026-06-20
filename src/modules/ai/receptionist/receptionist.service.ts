@@ -72,7 +72,7 @@ export class ReceptionistService {
       this.configService.get<string>('TWILIO_WEBHOOK_BASE_URL') ?? '';
 
     if (sid && token) {
-      this.twilio = new Twilio(sid, token);
+      this.twilio = Twilio(sid, token);
     }
   }
 
@@ -259,7 +259,7 @@ export class ReceptionistService {
 
     if (opts.gatherAction) {
       const gather = twiml.gather({
-        input: 'speech',
+        input: ['speech'],
         action: opts.gatherAction,
         speechTimeout: 'auto',
         speechModel: 'experimental_conversations',

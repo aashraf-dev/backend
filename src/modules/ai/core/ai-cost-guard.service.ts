@@ -1,4 +1,4 @@
-import { Injectable, Logger, PaymentRequiredException } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -42,16 +42,18 @@ export class AiCostGuardService {
     const key = `ai:quota:exceeded:${tenantId}`;
     const cached = await this.redis.get(key);
     if (cached === '1') {
-      throw new PaymentRequiredException(
+      throw new HttpException(
         'Monthly AI quota exceeded. Please upgrade your plan or wait until next month.',
+        HttpStatus.PAYMENT_REQUIRED,
       );
     }
 
     const quota = await this.getOrCreateQuota(tenantId);
     if (quota.isExceeded) {
       await this.redis.set(key, '1', 3600); // cache for 1 hour
-      throw new PaymentRequiredException(
+      throw new HttpException(
         'Monthly AI quota exceeded. Please upgrade your plan or wait until next month.',
+        HttpStatus.PAYMENT_REQUIRED,
       );
     }
   }
