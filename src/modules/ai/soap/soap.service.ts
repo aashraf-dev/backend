@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { DeepgramClient } from '@deepgram/sdk';
+import { DeepgramClient, ListenV1Response } from '@deepgram/sdk';
 import { ConfigService } from '@nestjs/config';
 
 import { AiProviderService } from '../core/ai-provider.service';
@@ -53,10 +53,14 @@ Respond ONLY with valid JSON matching this exact structure:
   "overallConfidence": <0.0-1.0>
 }`;
 
+function isSyncResponse(r: unknown): r is ListenV1Response {
+  return typeof r === 'object' && r !== null && 'results' in r;
+}
+
 @Injectable()
 export class SoapService {
   private readonly logger = new Logger(SoapService.name);
-  private readonly deepgram: DeepgramClient;
+  private readonly deepgram: DeepgramClient | null = null;
 
   constructor(
     private readonly ai: AiProviderService,
@@ -68,10 +72,10 @@ export class SoapService {
     private readonly configService: ConfigService,
   ) {
     const dgKey = this.configService.get<string>('DEEPGRAM_API_KEY');
-    if (dgKey) this.deepgram = new DeepgramClient(dgKey);
+    if (dgKey) {
+      this.deepgram = new DeepgramClient({ apiKey: dgKey });
+    }
   }
-
-  // ── Generate SOAP from text ───────────────────────────────────────────
 
   async generate(
     dto: GenerateSoapDto,
@@ -248,37 +252,40 @@ Generate the SOAP note now.
     this.logger.log(`Transcribing ${inputType} from ${mediaUrl}`);
 
     try {
-      const { result } = await this.deepgram.listen.prerecorded.transcribeUrl(
-        { url: mediaUrl },
-        {
-          model: deepgramModel,
-          smart_format: true,
-          diarize: true,
-          punctuate: true,
-          paragraphs: true,
-          utterances: true,
-          language: 'en-US',
-        },
-      );
+      // MediaTranscribeResponse is a union: ListenV1Response (sync) | ListenV1AcceptedResponse (async).
+      // We never set a callback URL, so the response is always the sync ListenV1Response.
+      const response = await this.deepgram.listen.v1.media.transcribeUrl({
+        url: mediaUrl,
+        model: deepgramModel,
+        smart_format: true,
+        diarize: true,
+        punctuate: true,
+        paragraphs: true,
+        utterances: true,
+        language: 'en-US',
+      });
 
-      const utterances = result?.results?.utterances ?? [];
+      if (!isSyncResponse(response)) {
+        this.logger.warn(
+          'Deepgram returned async accepted response unexpectedly',
+        );
+        return '';
+      }
+
+      const utterances = response.results?.utterances ?? [];
       if (utterances.length > 0) {
-        // Build diarized transcript: "Speaker 0: text\nSpeaker 1: text"
         return utterances
           .map((u: any) => `Speaker ${u.speaker}: ${u.transcript}`)
           .join('\n');
       }
 
-      // Fallback to plain transcript
       return (
-        result?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? ''
+        response.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? ''
       );
     } catch (err) {
       this.logger.error(
         `Deepgram transcription failed: ${(err as Error).message}`,
       );
-
-      // Fallback to Whisper via OpenAI
       this.logger.warn('Falling back to OpenAI Whisper transcription');
       return this.transcribeWithWhisper(mediaUrl);
     }
